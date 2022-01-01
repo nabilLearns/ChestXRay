@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 
 data = pd.read_csv('/content/drive/MyDrive/ChestXRay/Data_Entry_2017_v2020.csv')
-data.info()
+#data.info()
 
 data_indices = np.arange(data.shape[0])
 np.random.shuffle(data_indices)
@@ -18,9 +18,19 @@ val_indices = data_indices[num_train:num_train+num_val]
 test_indices = data_indices[num_train+num_val:]
 
 ## Preparing Image Indices and Labels of Training Set ##
+# Here, we reduce the dataframe to 2 relevant columns (image names & disease labels), containing entries for the relevant data splits
 #print(data["Image Index"][train_indices].reset_index().drop(['index'], axis=1))
-#ii_l = image indices and labels
+
+#ii_l ~ image indices and labels
+ii_l = data[["Image Index", "Finding Labels"]].reset_index().drop(['index'], axis=1)
+print(ii_l.info(), ii_l)
+
+'''
 train_ii_l = data[["Image Index", "Finding Labels"]].iloc[train_indices].reset_index().drop(['index'], axis=1)
+val_ii_l = data[["Image Index", "Finding Labels"]].iloc[val_indices].reset_index().drop(['index'], axis=1)
+test_ii_l = data[["Image Index", "Finding Labels"]].iloc[test_indices].reset_index().drop(['index'], axis=1)
+#print(train_ii_l)
+'''
 
 ## CONVERTING LABELS -> VECTORS ##
 #currently have: labels -> lists
@@ -49,6 +59,12 @@ coded_labels = {
 
 
 def label_to_vec(label):
+  """
+  Input: list of labels (type: list of strings)
+  Output: One hot coded vector for each label in input (type: list of ndarrays)
+  Example: label_to_vec(["Atelectasis", "Cardiomegaly"]) = [[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                                                        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+  """
   for i in range(len(label)):
     label[i] = coded_labels[label[i]]
   return label
@@ -58,10 +74,19 @@ def label_to_vec(label):
 #print(label_vecs[2].shape)
 #print(label_vecs)
 
-train_ii_l['Finding Labels'] = train_ii_l['Finding Labels'].apply(lambda x: x.split(sep='|')).apply(lambda x: label_to_vec(x)).apply(np.sum,axis=0)
-print(train_ii_l)
+ii_l['Finding Labels'] = ii_l['Finding Labels'].apply(lambda x: x.split(sep='|')).apply(lambda x: label_to_vec(x)).apply(np.sum,axis=0)
 
-#test = ["Cardiomegaly", "Nodule"]
-#for i in range(len(test)):
-#  print(coded_labels[test[i]])
-#coded_labels[test[0]]
+train_ii_l = ii_l.iloc[train_indices]
+val_ii_l = ii_l.iloc[val_indices]
+test_ii_l = ii_l.iloc[test_indices]
+
+'''
+train_ii_l['Finding Labels'] = train_ii_l['Finding Labels'].apply(lambda x: x.split(sep='|')).apply(lambda x: label_to_vec(x)).apply(np.sum,axis=0)
+val_ii_l['Finding Labels'] = val_ii_l['Finding Labels'].apply(lambda x: x.split(sep='|')).apply(lambda x: label_to_vec(x)).apply(np.sum,axis=0)
+test_ii_l['Finding Labels'] = test_ii_l['Finding Labels'].apply(lambda x: x.split(sep='|')).apply(lambda x: label_to_vec(x)).apply(np.sum,axis=0)
+
+test = ["Cardiomegaly", "Nodule"]
+for i in range(len(test)):
+  print(coded_labels[test[i]])
+coded_labels[test[0]]
+'''
