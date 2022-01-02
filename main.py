@@ -108,7 +108,7 @@ print(len(ii_l), train_ii_l.shape, train_ii_l)
 import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision
-from skimage import io
+#from skimage import io
 import os
 import matplotlib.pyplot as plt
 
@@ -131,7 +131,7 @@ class XRayDataSet(Dataset):
     img_name = os.path.join(self.image_dir,
                             self.labels.iloc[idx, 0])
     
-    image = io.imread(img_name)
+    image = torchvision.io.read_image(img_name) # io.imread(img_name)
     labels = self.labels.iloc[idx,1]
     labels = np.array([labels])
     #labels = labels.astype('float').reshape(-1,2) #??
@@ -156,7 +156,7 @@ def check_image_loading(indices):
   for index in range(len(indices)):
     print(train_ii_l.iloc[index], "\n")
     print(X_train[index])
-    plt.imshow(X_train[index]['image'])
+    plt.imshow(X_train[index]['image'][0,:,:])
     plt.show()
 
 check_image_loading(np.random.choice(len(train_ii_l), 10))
