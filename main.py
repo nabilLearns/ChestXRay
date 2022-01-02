@@ -4,10 +4,18 @@ drive.mount('/content/drive')
 from PIL import Image 
 import pandas as pd
 import numpy as np
+import os #os.path.isfile will be used to check if image filepath exists
 
+# Initialize Dataframe
 data = pd.read_csv('/content/drive/MyDrive/ChestXRay/Data_Entry_2017_v2020.csv')
-#data.info()
 
+# Remove rows from dataframe for which we have no downloaded images for
+image_path = image_path = '/content/drive/MyDrive/ChestXRay/ChestXRay_images/'
+data['Image_Path'] = image_path + data['Image Index']
+data['Image_Path'] = data['Image_Path'].apply(os.path.isfile) # 
+data = data[data['Image_Path'] == True] # reduces dataframe to rows we have downloaded images for
+
+# Split data
 data_indices = np.arange(data.shape[0])
 np.random.shuffle(data_indices)
 
@@ -23,6 +31,8 @@ test_indices = data_indices[num_train+num_val:]
 
 #ii_l ~ image indices and labels
 ii_l = data[["Image Index", "Finding Labels"]].reset_index().drop(['index'], axis=1)
+
+
 print(ii_l.info(), ii_l)
 
 '''
@@ -90,3 +100,5 @@ for i in range(len(test)):
   print(coded_labels[test[i]])
 coded_labels[test[0]]
 '''
+
+print(len(ii_l), train_ii_l.shape, train_ii_l)
