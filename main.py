@@ -6,6 +6,13 @@ import pandas as pd
 import numpy as np
 import os #os.path.isfile will be used to check if image filepath exists
 
+import torch
+from torch.utils.data import Dataset, DataLoader
+import torchvision
+# from skimage import io
+# import os
+import matplotlib.pyplot as plt
+
 ########### Getting Image Indices and labels from csv, Data split ###########
 # Initialize Dataframe
 data = pd.read_csv('/content/drive/MyDrive/ChestXRay/Data_Entry_2017_v2020.csv')
@@ -105,13 +112,6 @@ coded_labels[test[0]]
 print(len(ii_l), train_ii_l.shape, train_ii_l)
 
 ########### Working with Images ###########
-import torch
-from torch.utils.data import Dataset, DataLoader
-import torchvision
-#from skimage import io
-import os
-import matplotlib.pyplot as plt
-
 class XRayDataSet(Dataset):
   """Image dataset"""
 
