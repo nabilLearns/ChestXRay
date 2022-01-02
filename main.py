@@ -11,7 +11,7 @@ import os #os.path.isfile will be used to check if image filepath exists
 data = pd.read_csv('/content/drive/MyDrive/ChestXRay/Data_Entry_2017_v2020.csv')
 
 # Remove rows from dataframe for which we have no downloaded images for
-image_path = image_path = '/content/drive/MyDrive/ChestXRay/ChestXRay_images/'
+image_path = '/content/drive/MyDrive/ChestXRay/ChestXRay_images/'
 data['Image_Path'] = image_path + data['Image Index']
 data['Image_Path'] = data['Image_Path'].apply(os.path.isfile) # 
 data = data[data['Image_Path'] == True] # reduces dataframe to rows we have downloaded images for
@@ -147,17 +147,20 @@ train_transform = torch.nn.Sequential(
 )
 
 img_dir = '/content/drive/MyDrive/ChestXRay/ChestXRay_images'
-X_train = XRayDataSet(train_ii_l, img_dir)
 
-def check_image_loading(indices):
+Train = XRayDataSet(train_ii_l, img_dir)
+Val = XRayDataSet(val_ii_l, img_dir)
+Test = XRayDataSet(test_ii_l, img_dir)
+
+def check_image_loading(dataset, indices):
   '''
   Just want to compare loaded images with corresponding rows in dataframe to get an idea whether I'm loading images correctly
   '''
   for index in range(len(indices)):
     print(train_ii_l.iloc[index], "\n")
-    print(X_train[index])
-    plt.imshow(X_train[index]['image'][0,:,:])
+    print(dataset[index])
+    plt.imshow(dataset[index]['image'][0,:,:])
     plt.show()
 
-check_image_loading(np.random.choice(len(train_ii_l), 10))
+check_image_loading(Train, np.random.choice(len(train_ii_l), 10))
 # want X_train.shape = (67272, height, width) # note that dataset images are black and white therefore we do not have 3 RGB channels for each image
