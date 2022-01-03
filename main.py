@@ -1,3 +1,4 @@
+########### Getting Image Indices and labels from csv, Data split ###########
 from google.colab import drive #images_001 folder is stored on my GDrive
 drive.mount('/content/drive')
 
@@ -13,9 +14,13 @@ import torchvision
 # import os
 import matplotlib.pyplot as plt
 
-########### Getting Image Indices and labels from csv, Data split ###########
 # Initialize Dataframe
 data = pd.read_csv('/content/drive/MyDrive/ChestXRay/Data_Entry_2017_v2020.csv')
+
+# Get information about distribution of classes in data
+print("Class counts:\n", data['Finding Labels'].astype('category').cat.codes.value_counts())
+print("Number of classes: {}\n".format(data['Finding Labels'].astype('category').cat.codes.max()))
+data['Finding Labels'].astype('category').cat.codes.hist(bins=10)
 
 # Remove rows from dataframe for which we have no downloaded images for
 image_path = '/content/drive/MyDrive/ChestXRay/ChestXRay_images/'
@@ -39,16 +44,6 @@ test_indices = data_indices[num_train+num_val:]
 
 #ii_l ~ image indices and labels
 ii_l = data[["Image Index", "Finding Labels"]].reset_index().drop(['index'], axis=1)
-
-
-print(ii_l.info(), ii_l)
-
-'''
-train_ii_l = data[["Image Index", "Finding Labels"]].iloc[train_indices].reset_index().drop(['index'], axis=1)
-val_ii_l = data[["Image Index", "Finding Labels"]].iloc[val_indices].reset_index().drop(['index'], axis=1)
-test_ii_l = data[["Image Index", "Finding Labels"]].iloc[test_indices].reset_index().drop(['index'], axis=1)
-#print(train_ii_l)
-'''
 
 ## CONVERTING LABELS -> VECTORS ##
 #currently have: labels -> lists
@@ -99,17 +94,13 @@ val_ii_l = ii_l.iloc[val_indices]
 test_ii_l = ii_l.iloc[test_indices]
 
 '''
-train_ii_l['Finding Labels'] = train_ii_l['Finding Labels'].apply(lambda x: x.split(sep='|')).apply(lambda x: label_to_vec(x)).apply(np.sum,axis=0)
-val_ii_l['Finding Labels'] = val_ii_l['Finding Labels'].apply(lambda x: x.split(sep='|')).apply(lambda x: label_to_vec(x)).apply(np.sum,axis=0)
-test_ii_l['Finding Labels'] = test_ii_l['Finding Labels'].apply(lambda x: x.split(sep='|')).apply(lambda x: label_to_vec(x)).apply(np.sum,axis=0)
-
 test = ["Cardiomegaly", "Nodule"]
 for i in range(len(test)):
   print(coded_labels[test[i]])
 coded_labels[test[0]]
 '''
 
-print(len(ii_l), train_ii_l.shape, train_ii_l)
+#print(len(ii_l), train_ii_l.shape, train_ii_l)
 
 ########### Working with Images ###########
 class XRayDataSet(Dataset):
