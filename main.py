@@ -54,24 +54,23 @@ ii_l = data[["Image Index", "Finding Labels"]].reset_index().drop(['index'], axi
 
 #16 Classes
 coded_labels = {
-          "No Finding":         np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
-          "Atelectasis":        np.array([1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
-          "Cardiomegaly":       np.array([0,1,0,0,0,0,0,0,0,0,0,0,0,0,0]),
-          "Effusion":           np.array([0,0,1,0,0,0,0,0,0,0,0,0,0,0,0]),
-          "Infiltration":       np.array([0,0,0,1,0,0,0,0,0,0,0,0,0,0,0]),
-          "Mass":               np.array([0,0,0,0,1,0,0,0,0,0,0,0,0,0,0]),
-          "Nodule":             np.array([0,0,0,0,0,1,0,0,0,0,0,0,0,0,0]),
-          "Pneumonia":          np.array([0,0,0,0,0,0,1,0,0,0,0,0,0,0,0]),
-          "Pneumothorax":       np.array([0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]),
-          "Consolidation":      np.array([0,0,0,0,0,0,0,0,1,0,0,0,0,0,0]),
-          "Edema":              np.array([0,0,0,0,0,0,0,0,0,1,0,0,0,0,0]),
-          "Emphysema":          np.array([0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]),
-          "Fibrosis":           np.array([0,0,0,0,0,0,0,0,0,0,0,1,0,0,0]),
-          "PT":                 np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,0,0]),
-          "Hernia":             np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,1,0]),
-          "Pleural_Thickening": np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,1])
+          "No Finding":         np.array([1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
+          "Atelectasis":        np.array([0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
+          "Cardiomegaly":       np.array([0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0]),
+          "Effusion":           np.array([0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0]),
+          "Infiltration":       np.array([0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0]),
+          "Mass":               np.array([0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0]),
+          "Nodule":             np.array([0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0]),
+          "Pneumonia":          np.array([0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0]),
+          "Pneumothorax":       np.array([0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]),
+          "Consolidation":      np.array([0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0]),
+          "Edema":              np.array([0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0]),
+          "Emphysema":          np.array([0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]),
+          "Fibrosis":           np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0]),
+          "PT":                 np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0]),
+          "Hernia":             np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0]),
+          "Pleural_Thickening": np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1])
 }
-
 
 def label_to_vec(label):
   """
