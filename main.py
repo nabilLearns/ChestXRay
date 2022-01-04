@@ -137,10 +137,19 @@ class XRayDataSet(Dataset):
       sample['image'] = self.transform(sample['image'])
     return sample
 
+image_transform = torchvision.transforms.Compose([
+    torchvision.transforms.ToPILImage(),                                            
+    torchvision.transforms.Resize(100),
+    torchvision.transforms.ToTensor()
+]
+)
+
+'''
 train_transform = torch.nn.Sequential(
     #torchvision.transforms.Grayscale(num_output_channels=1),
     torchvision.transforms.Resize(1000)
 )
+'''
 
 def check_image_loading(dataset, indices):
   '''
@@ -153,15 +162,15 @@ def check_image_loading(dataset, indices):
     plt.imshow(dataset[index]['image'][0,:,:])
     plt.show()
 
-train_data = XRayDataSet(train_ii_l, image_path, train_transform)
-val_data = XRayDataSet(val_ii_l, image_path)
-test_data = XRayDataSet(test_ii_l, image_path)
+train_data = XRayDataSet(train_ii_l, image_path, image_transform)
+val_data = XRayDataSet(val_ii_l, image_path, image_transform)
+test_data = XRayDataSet(test_ii_l, image_path, image_transform)
 check_image_loading(train_data, np.random.choice(len(train_ii_l), 10))
 #check_image_loading(train_data, [2068])
 
-train_dataloader = DataLoader(train_data, batch_size=64)
-val_dataloader = DataLoader(val_data, batch_size=64)
-test_dataloader = DataLoader(test_data, batch_size=64)
+train_dataloader = DataLoader(train_data, batch_size=16)
+val_dataloader = DataLoader(val_data, batch_size=16)
+test_dataloader = DataLoader(test_data, batch_size=16)
 
 # want X_train.shape = (67272, height, width) # note that dataset images are black and white therefore we do not have 3 RGB channels for each image
 
@@ -205,7 +214,7 @@ def train(num_epochs = 1, batch_size = 16):
   accuracy_epoch = []
   for epoch in range(num_epochs):
     optim.zero_grad() # important !!
-    for it in range(0, 128, batch_size): # for it in range(0, len(train_ii_l) // 5, batch_size):
+    for it in range(0, len(train_ii_l), batch_size):
       print(it)
       images, labels = next(iter(train_dataloader))['image'], next(iter(train_dataloader))['labels']
       images = images / 255
