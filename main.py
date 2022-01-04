@@ -206,4 +206,5 @@ def train(num_epochs = 1, batch_size = 64):
     for it in range(0, len(train_ii_l), batch_size):
       print(it)
       images, labels = next(iter(train_dataloader))['image'], next(iter(train_dataloader))['labels']
+      images = images / 255
       update_weights(images, labels, baseline)
