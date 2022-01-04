@@ -14,6 +14,8 @@ import torchvision
 # import os
 import matplotlib.pyplot as plt
 
+import models
+
 # Initialize Dataframe
 data = pd.read_csv('/content/drive/MyDrive/ChestXRay/Data_Entry_2017_v2020.csv')
 
@@ -163,3 +165,45 @@ val_dataloader = DataLoader(val_data, batch_size=64)
 test_dataloader = DataLoader(test_data, batch_size=64)
 
 # want X_train.shape = (67272, height, width) # note that dataset images are black and white therefore we do not have 3 RGB channels for each image
+
+########### Building the CNN model(s) ###########
+baseline = models.BaseLineCNN()
+
+'''
+Exploring train_dataloader
+x, y = next(iter(train_dataloader))['image'], next(iter(train_dataloader))['labels']
+print(x.shape, x[0:2] / 255)
+x = x / 255
+x = x.to(device)
+logits = baseline(x)
+print(logits.shape, logits[0])
+print(logits[0:1].shape, logits[0:1])
+print(y[0].shape, y[0], type(y[0][0][0]))
+'''
+
+optim = torch.optim.Adam(baseline.parameters())
+loss_func = torch.nn.CrossEntropyLoss()
+
+def loss_function(X, Y, model):
+  print("Test", Y[0], X[0])
+  logits = model(X)
+  return loss_func(X, Y)
+
+def update_weights(X, Y, model):
+  '''
+  input: X (num examples x num labels)
+         Y (num examples x num labels),
+         model (nn.Module)
+  '''
+  loss = loss_function(X, Y, model)
+  print("LOSS: ", loss)
+  loss.backward()
+  optim.step()
+
+def train(num_epochs = 1, batch_size = 64):
+  accuracy_epoch = []
+  for epoch in range(num_epochs):
+    for it in range(0, len(train_ii_l), batch_size):
+      print(it)
+      images, labels = next(iter(train_dataloader))['image'], next(iter(train_dataloader))['labels']
+      update_weights(images, labels, baseline)
