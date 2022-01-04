@@ -50,7 +50,7 @@ ii_l = data[["Image Index", "Finding Labels"]].reset_index().drop(['index'], axi
 #each possible label = a 1 hot vector i.e. cardiomegaly = [1 0 0 0 0 0 0 0]. Take sum of one-hot-vectors in a label row as the label vector.
 #i.e. if emphysema = [0 1 0 0 0 0 0 0], then a patient with cardiomegaly & emphysema has label [1 1 0 0 0 0 0 0]
 
-#15 Classes
+#16 Classes
 coded_labels = {
           "No Finding":         np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
           "Atelectasis":        np.array([1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
@@ -103,6 +103,8 @@ coded_labels[test[0]]
 #print(len(ii_l), train_ii_l.shape, train_ii_l)
 
 ########### Working with Images ###########
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+from torchvision.transforms.transforms import ToPILImage
 class XRayDataSet(Dataset):
   """Image dataset"""
 
@@ -122,14 +124,12 @@ class XRayDataSet(Dataset):
     img_name = os.path.join(self.image_dir,
                             self.labels.iloc[idx, 0])
     
-    image = torchvision.io.read_image(img_name) # io.imread(img_name)
+    image = torchvision.io.read_image(img_name) #io.imread(img_name)
     labels = self.labels.iloc[idx,1]
     labels = np.array([labels])
-    #labels = labels.astype('float').reshape(-1,2) #??
     sample = {'image': image, 'labels': labels}
     if self.transform:
-      sample = self.transform(sample)
-
+      sample['image'] = self.transform(sample['image'])
     return sample
 
 
@@ -137,21 +137,25 @@ train_transform = torch.nn.Sequential(
     torchvision.transforms.Resize(1000)
 )
 
-img_dir = '/content/drive/MyDrive/ChestXRay/ChestXRay_images'
-
-Train = XRayDataSet(train_ii_l, img_dir)
-Val = XRayDataSet(val_ii_l, img_dir)
-Test = XRayDataSet(test_ii_l, img_dir)
 
 def check_image_loading(dataset, indices):
   '''
   Just want to compare loaded images with corresponding rows in dataframe to get an idea whether I'm loading images correctly
   '''
   for index in range(len(indices)):
+    print("INDEX: ", index)
     print(train_ii_l.iloc[index], "\n")
-    print(dataset[index])
+    print(dataset[index], dataset[index]['image'].shape)
+    #plt.imshow(dataset[index]['image'][0,:,:])
     plt.imshow(dataset[index]['image'][0,:,:])
     plt.show()
 
-check_image_loading(Train, np.random.choice(len(train_ii_l), 10))
-# want X_train.shape = (67272, height, width) # note that dataset images are black and white therefore we do not have 3 RGB channels for each image
+train_data = XRayDataSet(train_ii_l, image_path)
+val_data = XRayDataSet(val_ii_l, image_path)
+test_data = XRayDataSet(test_ii_l, image_path)
+check_image_loading(train_data, np.random.choice(len(train_ii_l), 10))
+#check_image_loading(train_data, [2068]) for some reason this image seems to have tensor of shape [4, 1024, 1024] instead of [1, 1024, 1024]
+
+train_dataloader = DataLoader(train_data, batch_size=64)
+val_dataloader = DataLoader(val_data, batch_size=64)
+test_dataloader = DataLoader(test_data, batch_size=64)
