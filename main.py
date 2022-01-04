@@ -183,7 +183,7 @@ print(y[0].shape, y[0], type(y[0][0][0]))
 '''
 
 optim = torch.optim.Adam(baseline.parameters())
-loss_func = torch.nn.CrossEntropyLoss()
+loss_func = torch.nn.BCEWithLogitsLoss()#torch.nn.CrossEntropyLoss()
 
 def loss_function(X, Y, model):
   print("Test", Y[0], X[0])
@@ -202,14 +202,15 @@ def update_weights(X, Y, model):
   loss.backward()
   optim.step()
 
-def train(num_epochs = 1, batch_size = 64):
+def train(num_epochs = 1, batch_size = 16):
   accuracy_epoch = []
   for epoch in range(num_epochs):
-    for it in range(0, len(train_ii_l), batch_size):
+    optim.zero_grad() # important !!
+    for it in range(0, 128, batch_size): # for it in range(0, len(train_ii_l) // 5, batch_size):
       print(it)
       images, labels = next(iter(train_dataloader))['image'], next(iter(train_dataloader))['labels']
       images = images / 255
-      images, labels = images.to(device), labels.to(device) # Ensure tensors used in computation are on GPU
+      images, labels = images.to(device), labels.to(device)
       update_weights(images, labels, baseline)
 
 # Train model
