@@ -187,7 +187,8 @@ loss_func = torch.nn.CrossEntropyLoss()
 def loss_function(X, Y, model):
   print("Test", Y[0], X[0])
   logits = model(X)
-  return loss_func(X, Y)
+  Y = Y.squeeze(1)
+  return loss_func(logits, Y)
 
 def update_weights(X, Y, model):
   '''
