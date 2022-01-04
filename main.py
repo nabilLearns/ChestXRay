@@ -104,7 +104,10 @@ coded_labels[test[0]]
 
 ########### Working with Images ###########
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-from torchvision.transforms.transforms import ToPILImage
+#from torchvision.transforms import ToPILImage
+#from skimage import io
+#from PIL import Image
+
 class XRayDataSet(Dataset):
   """Image dataset"""
 
@@ -112,7 +115,6 @@ class XRayDataSet(Dataset):
     self.labels = labels
     self.image_dir = image_dir
     self.transform=transform
-
   
   def __len__(self):
     return len(self.labels)
@@ -124,19 +126,20 @@ class XRayDataSet(Dataset):
     img_name = os.path.join(self.image_dir,
                             self.labels.iloc[idx, 0])
     
-    image = torchvision.io.read_image(img_name) #io.imread(img_name)
+    image = torchvision.io.read_image(img_name)[0:1] # slice images, so only keep 1 channel #io.imread(img_name) 
+    #image = image.to(device)
     labels = self.labels.iloc[idx,1]
     labels = np.array([labels])
+    labels = labels.astype('float')
     sample = {'image': image, 'labels': labels}
     if self.transform:
       sample['image'] = self.transform(sample['image'])
     return sample
 
-
 train_transform = torch.nn.Sequential(
+    #torchvision.transforms.Grayscale(num_output_channels=1),
     torchvision.transforms.Resize(1000)
 )
-
 
 def check_image_loading(dataset, indices):
   '''
@@ -146,16 +149,17 @@ def check_image_loading(dataset, indices):
     print("INDEX: ", index)
     print(train_ii_l.iloc[index], "\n")
     print(dataset[index], dataset[index]['image'].shape)
-    #plt.imshow(dataset[index]['image'][0,:,:])
     plt.imshow(dataset[index]['image'][0,:,:])
     plt.show()
 
-train_data = XRayDataSet(train_ii_l, image_path)
+train_data = XRayDataSet(train_ii_l, image_path, train_transform)
 val_data = XRayDataSet(val_ii_l, image_path)
 test_data = XRayDataSet(test_ii_l, image_path)
 check_image_loading(train_data, np.random.choice(len(train_ii_l), 10))
-#check_image_loading(train_data, [2068]) for some reason this image seems to have tensor of shape [4, 1024, 1024] instead of [1, 1024, 1024]
+#check_image_loading(train_data, [2068])
 
 train_dataloader = DataLoader(train_data, batch_size=64)
 val_dataloader = DataLoader(val_data, batch_size=64)
 test_dataloader = DataLoader(test_data, batch_size=64)
+
+# want X_train.shape = (67272, height, width) # note that dataset images are black and white therefore we do not have 3 RGB channels for each image
