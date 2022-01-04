@@ -168,6 +168,7 @@ test_dataloader = DataLoader(test_data, batch_size=64)
 
 ########### Building the CNN model(s) ###########
 baseline = models.BaseLineCNN()
+baseline.to(device) # Ensure model does computations on GPU
 
 '''
 Exploring train_dataloader
@@ -208,4 +209,8 @@ def train(num_epochs = 1, batch_size = 64):
       print(it)
       images, labels = next(iter(train_dataloader))['image'], next(iter(train_dataloader))['labels']
       images = images / 255
+      images, labels = images.to(device), labels.to(device) # Ensure tensors used in computation are on GPU
       update_weights(images, labels, baseline)
+
+# Train model
+train()
