@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 class BaseLineCNN(nn.Module):
-  def __init__(self, num_channels=1, number_of_classes=15): # we actually have 16 classes, but fit them into vector of size 15, see label conversion code
+  def __init__(self, num_channels=1, number_of_classes=16):
     super(BaseLineCNN, self).__init__()
 
     self.conv1 = nn.Sequential(
