@@ -5,13 +5,11 @@ drive.mount('/content/drive')
 from PIL import Image 
 import pandas as pd
 import numpy as np
-import os #os.path.isfile will be used to check if image filepath exists
+import os # using os.path.isfile to check if image filepath exists
 
 import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision
-# from skimage import io
-# import os
 import matplotlib.pyplot as plt
 
 import models
@@ -105,9 +103,6 @@ coded_labels[test[0]]
 
 ########### Working with Images ###########
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-#from torchvision.transforms import ToPILImage
-#from skimage import io
-#from PIL import Image
 
 class XRayDataSet(Dataset):
   """Image dataset"""
@@ -144,13 +139,6 @@ image_transform = torchvision.transforms.Compose([
 ]
 )
 
-'''
-train_transform = torch.nn.Sequential(
-    #torchvision.transforms.Grayscale(num_output_channels=1),
-    torchvision.transforms.Resize(1000)
-)
-'''
-
 def check_image_loading(dataset, indices):
   '''
   Just want to compare loaded images with corresponding rows in dataframe to get an idea whether I'm loading images correctly
@@ -171,8 +159,6 @@ check_image_loading(train_data, np.random.choice(len(train_ii_l), 10))
 train_dataloader = DataLoader(train_data, batch_size=16)
 val_dataloader = DataLoader(val_data, batch_size=16)
 test_dataloader = DataLoader(test_data, batch_size=16)
-
-# want X_train.shape = (67272, height, width) # note that dataset images are black and white therefore we do not have 3 RGB channels for each image
 
 ########### Building the CNN model(s) ###########
 baseline = models.BaseLineCNN()
