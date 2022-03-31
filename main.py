@@ -5,28 +5,39 @@ drive.mount('/content/drive')
 from PIL import Image 
 import pandas as pd
 import numpy as np
-import os # using os.path.isfile to check if image filepath exists
+import os #os.path.isfile will be used to check if image filepath exists
 
 import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision
+# from skimage import io
+# import os
 import matplotlib.pyplot as plt
-
-import models
 
 # Initialize Dataframe
 data = pd.read_csv('/content/drive/MyDrive/ChestXRay/Data_Entry_2017_v2020.csv')
 
-# Get information about distribution of classes in data
-print("Class counts:\n", data['Finding Labels'].astype('category').cat.codes.value_counts())
-print("Number of classes: {}\n".format(data['Finding Labels'].astype('category').cat.codes.max()))
-data['Finding Labels'].astype('category').cat.codes.hist(bins=10)
+def visualize_class_distribution(num_bins: int):
+  """
+  Prints and plots information about distribution of classes in data
+  Arguments: Number of equal-width bins to show in class distribution histogram
+  Returns: Nothing
+  """
+  print("Class counts:\n", data['Finding Labels'].astype('category').cat.codes.value_counts())
+  print("Number of classes: {}\n".format(data['Finding Labels'].astype('category').cat.codes.max()))
+  data['Finding Labels'].astype('category').cat.codes.hist(bins=num_bins)
+  
+visualize_class_distribution(num_bins=10)
 
 # Remove rows from dataframe for which we have no downloaded images for
 image_path = '/content/drive/MyDrive/ChestXRay/ChestXRay_images/'
 data['Image_Path'] = image_path + data['Image Index']
 data['Image_Path'] = data['Image_Path'].apply(os.path.isfile) # 
 data = data[data['Image_Path'] == True] # reduces dataframe to rows we have downloaded images for
+
+# Class distribution of data that has been downloaded -- ~200 classes represented in downloaded data vs. ~800 classes total 
+visualize_class_distribution(10)
+visualize_class_distribution(100)
 
 # Split data
 data_indices = np.arange(data.shape[0])
@@ -70,6 +81,7 @@ coded_labels = {
           "Pleural_Thickening": np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1])
 }
 
+
 def label_to_vec(label):
   """
   Input: list of labels (type: list of strings)
@@ -98,11 +110,13 @@ for i in range(len(test)):
   print(coded_labels[test[i]])
 coded_labels[test[0]]
 '''
-
 #print(len(ii_l), train_ii_l.shape, train_ii_l)
 
-########### Working with Images ###########
+########### Working with Images ###########          
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+#from torchvision.transforms import ToPILImage
+#from skimage import io
+#from PIL import Image
 
 class XRayDataSet(Dataset):
   """Image dataset"""
@@ -111,6 +125,7 @@ class XRayDataSet(Dataset):
     self.labels = labels
     self.image_dir = image_dir
     self.transform=transform
+
   
   def __len__(self):
     return len(self.labels)
@@ -132,12 +147,19 @@ class XRayDataSet(Dataset):
       sample['image'] = self.transform(sample['image'])
     return sample
 
-image_transform = torchvision.transforms.Compose([
+train_transform = torchvision.transforms.Compose([
     torchvision.transforms.ToPILImage(),                                            
     torchvision.transforms.Resize(100),
     torchvision.transforms.ToTensor()
 ]
 )
+
+'''
+train_transform = torch.nn.Sequential(
+    #torchvision.transforms.Grayscale(num_output_channels=1),
+    torchvision.transforms.Resize(1000)
+)
+'''
 
 def check_image_loading(dataset, indices):
   '''
@@ -150,43 +172,40 @@ def check_image_loading(dataset, indices):
     plt.imshow(dataset[index]['image'][0,:,:])
     plt.show()
 
-train_data = XRayDataSet(train_ii_l, image_path, image_transform)
-val_data = XRayDataSet(val_ii_l, image_path, image_transform)
-test_data = XRayDataSet(test_ii_l, image_path, image_transform)
-check_image_loading(train_data, np.random.choice(len(train_ii_l), 10))
+train_data = XRayDataSet(train_ii_l, image_path, train_transform)
+val_data = XRayDataSet(val_ii_l, image_path)
+test_data = XRayDataSet(test_ii_l, image_path)
+
+check_image_loading(train_data, np.random.choice(len(train_ii_l), 10)) # Visualize loaded images
 #check_image_loading(train_data, [2068])
 
 train_dataloader = DataLoader(train_data, batch_size=16)
 val_dataloader = DataLoader(val_data, batch_size=16)
 test_dataloader = DataLoader(test_data, batch_size=16)
 
-########### Building the CNN model(s) ###########
-baseline = models.BaseLineCNN()
-baseline.to(device) # Ensure model does computations on GPU
+# want X_train.shape = (67272, height, width) # note that dataset images are black and white therefore we do not have 3 RGB channels for each image
 
-'''
-Exploring train_dataloader
-x, y = next(iter(train_dataloader))['image'], next(iter(train_dataloader))['labels']
-print(x.shape, x[0:2] / 255)
-x = x / 255
-x = x.to(device)
-logits = baseline(x)
-print(logits.shape, logits[0])
-print(logits[0:1].shape, logits[0:1])
-print(y[0].shape, y[0], type(y[0][0][0]))
-'''
+########### TRAIN MODEL(S) ###########
+baseline = models.BaseLineCNN() # re-instantiate model every time you run through a training loop
+baseline.to(device)
 
 optim = torch.optim.Adam(baseline.parameters())
 loss_func = torch.nn.BCEWithLogitsLoss()#torch.nn.CrossEntropyLoss()
 
 def loss_function(X, Y, model):
-  print("Test", Y[0], X[0])
+  #print("Test", Y[0], X[0])
   logits = model(X)
   Y = Y.squeeze(1)
+  #Y = Y.float()
   return loss_func(logits, Y)
+
+def predict(model, inputs):
+  return torch.nn.Softmax(dim=1)(model(inputs))
 
 def update_weights(X, Y, model):
   '''
+  Redundant function - update_weights now implemented within training loop
+
   input: X (num examples x num labels)
          Y (num examples x num labels),
          model (nn.Module)
@@ -194,18 +213,60 @@ def update_weights(X, Y, model):
   loss = loss_function(X, Y, model)
   print("LOSS: ", loss)
   loss.backward()
-  optim.step()
+  optim.step() # update weights
 
-def train(num_epochs = 1, batch_size = 16):
-  accuracy_epoch = []
+def train(num_epochs = 10, batch_size = 16):
+  avg_train_loss_epoch = []
+  avg_val_loss_epoch = []
   for epoch in range(num_epochs):
-    optim.zero_grad() # important !!
-    for it in range(0, len(train_ii_l), batch_size):
+    #optim.zero_grad() # important !!
+    avg_train_loss = 0
+    avg_val_loss = 0
+    #Training
+    for it in range(0, 128, batch_size): # for it in range(0, len(train_ii_l) // 5, batch_size): # onlt going through small subset of data because of memory issues
+      optim.zero_grad()
       print(it)
       images, labels = next(iter(train_dataloader))['image'], next(iter(train_dataloader))['labels']
       images = images / 255
       images, labels = images.to(device), labels.to(device)
-      update_weights(images, labels, baseline)
+      #update_weights(images, labels, baseline)
 
-# Train model
+      loss = loss_function(images, labels, baseline)
+      loss.backward()
+      optim.step()
+
+      train_prediction = predict(baseline, images).argmax(1)
+      #avg_train_acc += train_prediction
+      
+      # This is most likely why I was getting the RAM issue; I did not use loss.item() before, so I was adding the entire computational graph to the loss list
+      avg_train_loss += loss.detach().item() #loss_function(images, labels, baseline)
+
+    avg_train_loss_epoch.append(avg_train_loss / train_ii_l.shape[0]) # divide by number images in batch
+    #del images, labels
+    #torch.cuda.synchronize()
+
+    '''
+    #Validation
+    for it in range(0, 128, batch_size): # for it in range(0, len(train_ii_l) // 5, batch_size):
+      print(it)
+      images, labels = next(iter(val_dataloader))['image'], next(iter(val_dataloader))['labels']
+      images = images / 255
+      images, labels = images.to(device), labels.to(device)
+      update_weights(images, labels, baseline)
+      avg_val_loss += loss_function(images, labels, baseline)
+    avg_val_loss_epoch.append(avg_val_loss / val_ii_l.shape[0])
+    '''
+
+  #Plot losses
+  plt.title("Train vs. Validation Loss")
+  plt.plot(avg_train_loss_epoch, label="Train")
+  plt.plot(avg_val_loss_epoch, label="Validation")
+  plt.xlabel("Epoch")
+  plt.ylabel("Loss")
+  plt.legend(loc='best')
+  plt.show()
+          
+#print(torch.cuda.memory_allocated())
+#torch.cuda.empty_cache()
+#torch.cuda.synchronize()
 train()
